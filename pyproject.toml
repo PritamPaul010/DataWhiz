@@ -13,6 +13,8 @@ packages = [{ include = "datawhiz" }]
 python = "^3.11"
 fastapi = "^0.119.0"
 uvicorn = {extras = ["standard"], version = "^0.37.0"}
+sqlalchemy = {extras = ["asyncio"], version = "^2.0.44"}
+asyncpg = "^0.30.0"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
