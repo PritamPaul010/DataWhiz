@@ -1,6 +1,9 @@
-from datetime import datetime, timedelta, UTC
+from datetime import datetime, timedelta, UTC, timezone
+from fastapi import HTTPException, status
 from jose import JWTError, jwt
+
 from datawhiz.config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
+
 
 # Create JWT Access Token
 def create_access_token(data: dict):
@@ -17,9 +20,6 @@ def create_access_token(data: dict):
     expire = datetime.now(UTC) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
 
-    print("SECRET_KEY: ", SECRET_KEY)
-    print("ALGORITHM: ", ALGORITHM)
-
     # Encode the token using SECRET_KEY and algorithm
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
@@ -34,7 +34,26 @@ def verify_token(token: str):
     """
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms= [ALGORITHM])
-        return payload
+        email: str = payload.get("sub")
+        if email is None:
+            raise HTTPException(
+                status_code = status.HTTP_401_UNAUTHORIZED,
+                detail= "Invalid token: user not found!"
+            )
+
+        exp = payload.get("exp")
+        if exp and datetime.fromtimestamp(exp, tz=timezone.utc) < datetime.now(timezone.utc):
+            raise HTTPException(
+                status_code= status.HTTP_401_UNAUTHORIZED,
+                detail= "Token has expired!"
+            )
+
+        return email
+
     except JWTError:
-        return None
+        raise HTTPException(
+            status_code= status.HTTP_401_UNAUTHORIZED,
+            detail= "Invalid or expired token!"
+        )
+
 

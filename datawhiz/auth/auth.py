@@ -1,6 +1,7 @@
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from fastapi.security import OAuth2PasswordBearer
 from ..models import User
 from .hashing import verify_password
 from .jwt_handler import create_access_token
@@ -8,6 +9,7 @@ from .jwt_handler import create_access_token
 async def authenticate_user(email: str, password: str, db: AsyncSession):
     # Get User from DB
     result = await db.execute(select(User).where(User.email == email))
+    print('result: ', result)
     user = result.scalars().first()
 
     if not user:
@@ -19,3 +21,4 @@ async def authenticate_user(email: str, password: str, db: AsyncSession):
     token = create_access_token(data={'sub': user.email})
 
     return token
+
